@@ -1,55 +1,75 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { PermisosService } from '../servicios/permisos.service'
-import { Datarx } from '../modelos/datarx'
-import { LoginService } from '../servicios/login.service'
+
+import { Apollo } from 'apollo-angular';
+import { Subscription } from 'rxjs';
+
+import gql from 'graphql-tag';
+import { PermissionsService } from '../services/permissions.service';
+
+const loginAuth = gql`
+  query login($email: String, $password: String) {
+    login(email: $email, password: $password)
+  }
+`;
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
 })
+export class LoginComponent implements OnInit, OnDestroy {
+  loginForm: FormGroup;
+  dataLogin;
 
-export class LoginComponent implements OnInit {
-  loginData: FormGroup;
-  constructor(private router: Router,
-    private loginServices:LoginService,
-    private permisos: PermisosService,
-    private formBuilder: FormBuilder) { }
+  private querySubscription: Subscription;
+
+  constructor(
+    private formBuilder: FormBuilder,
+    private apollo: Apollo,
+    private permissions: PermissionsService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.loginData = this.formBuilder.group({
-      email:["",Validators.required],
-      password:["",Validators.required],
-  }); 
+    this._loginForm();
+    this._login();
   }
 
-login():void{
-  let email =this.loginData.get('email').value;
-  let password =this.loginData.get('password').value;
-  let datalogin = {
-    data:{
-      password,
-      email
-    }
+  ngOnDestroy() {
+    this.querySubscription.unsubscribe();
+  }
+
+  _loginForm = () => {
+    this.loginForm = this.formBuilder.group({
+      email: ['', [Validators.required]],
+      password: ['', [Validators.required]],
+    });
   };
-    this.loginServices.login(datalogin).subscribe((data:Datarx)=>{
-  if(data.transaccion){
-    if(this.permisos.decodificarToken(data.token)){
-      sessionStorage.setItem('rol', JSON.stringify(data.data));
-      this.router.navigate(['/home']);
-    }else{
-     email='';
-      password='';
-      alert('error')
-    }
-  } error=>{
-    email='';
-      password='';
-    alert('ERROR')
-  };
-});
-}
-  
+
+  _login() {
+    let email = this.loginForm.get('email').value,
+      password = this.loginForm.get('password').value;
+
+    this.querySubscription = this.apollo
+      .watchQuery<any>({
+        query: loginAuth,
+        variables: {
+          email,
+          password,
+        },
+      })
+      .valueChanges.subscribe(({ data }) => {
+        console.log(data);
+        if (data.login !== null) {
+          this.dataLogin = data;
+          this.permissions.decodeToken(data.login.token);
+          this.router.navigate(['/home']);
+          console.log(this.permissions.getUserLogin());
+        } else {
+          console.log('data null');
+        }
+      });
+  }
 }

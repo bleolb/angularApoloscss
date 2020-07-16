@@ -1,0 +1,150 @@
+enum Level {
+  Basic
+  Intermediate
+  Advanced
+}
+
+enum AcademicTitle {
+  Third_level
+  Master
+  PhD
+}
+
+scalar JSON
+
+type Query {
+  getCourses: [Course]
+  getCourse(_id: ID!): [Course]
+
+  getPersons: [Person]
+  getPerson(_id: ID!): [Person]
+
+  getRoles: [Role]
+  getRole(_id: ID!): [Role]
+
+  login(email: String, password: String): JSON
+}
+
+type Mutation {
+  createCourse(input: CourseInput!): Boolean
+  updateCourse(_id: ID!, input: EditCourseInput): Boolean
+  deleteCourse(_id: ID!): Boolean
+
+  createPerson(input: PersonInput!): Boolean
+  updatePerson(_id: ID!, input: EditPersonInput): Boolean
+  deletePerson(_id: ID!): Boolean
+
+  createRole(input: RoleInput!): Boolean
+  updateRole(_id: ID!, input: EditRoleInput): Boolean
+  deleteRole(_id: ID!): Boolean
+}
+
+input CourseInput {
+  title: String
+  professor: String
+  description: String
+  topic: String
+  level: Level
+}
+
+input EditCourseInput {
+  title: String
+  professor: String
+  description: String
+  topic: String
+  participants: [ID]
+  level: Level
+}
+
+input PersonInput {
+  name: String
+  lastname: String
+  age: String
+  email: String
+  profile_pic: String
+  password: String
+  role: String
+  academicTitle: AcademicTitle
+}
+
+input EditPersonInput {
+  name: String
+  lastname: String
+  age: String
+  email: String
+  profile_pic: String
+  password: String
+  role: String
+  academicTitle: AcademicTitle
+}
+
+input RoleInput {
+  name: String
+  description: String
+}
+
+input EditRoleInput {
+  name: String
+  description: String
+}
+
+type Course {
+  _id: ID!
+  title: String
+  professor: String
+  description: String
+  topic: String
+  participants: [Student]
+  level: Level
+}
+
+interface Person {
+  _id: ID!
+  name: String
+  lastname: String
+  email: String
+  profile_pic: String
+  password: String
+  role: String
+}
+
+# type User {
+#   _id: ID!
+#   name: String
+#   lastname: String
+#   email: String
+#   profile_pic: String
+#   password: String
+#   role: String
+#   academicTitle: AcademicTitle
+# }
+
+type Student implements Person {
+  _id: ID!
+  name: String
+  lastname: String
+  age: String
+  email: String
+  profile_pic: String
+  password: String
+  role: String
+  foto: String
+}
+
+type Professor implements Person {
+  _id: ID!
+  name: String
+  lastname: String
+  age: String
+  email: String
+  profile_pic: String
+  password: String
+  role: String
+  academicTitle: AcademicTitle
+}
+
+type Role {
+  _id: ID!
+  name: String
+  description: String
+}
